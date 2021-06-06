@@ -1,0 +1,1 @@
+Exports MS Excel file (.xlsx) with the fastest valid laps for each user in the given SMS JSON file.
