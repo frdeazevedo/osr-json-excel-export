@@ -152,6 +152,7 @@ def exportToXLSX(laps, output_filename):
     for l in laps:
         vehicle = getVehicle(vehicles_json_obj, l['vehicle'])
         worksheet.write_row(pos, 0, [pos, l['name'], vehicle['name'], l['laps_turned'], msToLapTime(l['lap_time'])])
+        print(output_filename+" - " + str(l['laps_turned']))
         pos = pos+1
     
     workbook.close()
@@ -190,12 +191,41 @@ def main():
     qualifying1_fastest_laps = getFastestLaps(getAllHistoryLaps(qualifying1_history))
     race1_fastest_laps = getFastestLaps(getAllHistoryLaps(race1_history))
 
-    for fl in all_fastest_laps:
-        print(msToLapTime(fl['lap_time'])+" "+fl['name'])
+    correct_lap_count_all_fastest_laps = []
 
-    exportToXLSX(all_fastest_laps, 'all.xlsx')
     exportToXLSX(practice1_fastest_laps, 'practice.xlsx')
     exportToXLSX(qualifying1_fastest_laps, 'qualifying.xlsx')
     exportToXLSX(race1_fastest_laps, 'race.xlsx')
+
+    for fl in all_fastest_laps:
+        #print(msToLapTime(fl['lap_time'])+" "+fl['name'])
+
+        p_lap_count = 0
+        q_lap_count = 0
+        r_lap_count = 0
+
+        for p in practice1_fastest_laps:
+            if fl['name']==p['name']:
+                p_lap_count = p['laps_turned']
+                break
+        for q in qualifying1_fastest_laps:
+            if fl['name']==q['name']:
+                q_lap_count = q['laps_turned']
+                break
+        for r in race1_fastest_laps:
+            if fl['name']==r['name']:
+                r_lap_count = r['laps_turned']
+                break
+
+        fl['laps_turned'] = p_lap_count+q_lap_count+r_lap_count
+
+        #print(fl['name']+": "+str(p_lap_count)+" + "+str(q_lap_count)+" + "+str(r_lap_count))
+        
+        correct_lap_count_all_fastest_laps.append(fl)
+
+    exportToXLSX(correct_lap_count_all_fastest_laps, 'all.xlsx')
+    # exportToXLSX(practice1_fastest_laps, 'practice.xlsx')
+    # exportToXLSX(qualifying1_fastest_laps, 'qualifying.xlsx')
+    # exportToXLSX(race1_fastest_laps, 'race.xlsx')
     
 main()
