@@ -82,6 +82,34 @@ def getHistoryList(json_obj):
     
     return history_list
 
+# returns a list of lap times
+def getHistoryListForStage(json_obj, stage, countThisLapTimes=1):
+    history_list = []
+    history = json_obj['stats']['history']
+
+    for h in history:
+        if stage in h['stages']:
+            stage_lap_times = []
+            stage_events = h['stages'][stage]['events']
+            participants = h['participants']
+            for event in stage_events:
+                if 'CountThisLapTimes' in event['attributes']:
+                    if (event['attributes']['CountThisLapTimes'] == countThisLapTimes
+                        and event['attributes']['Sector1Time'] != 0
+                        and event['attributes']['Sector2Time'] != 0
+                        and event['attributes']['Sector3Time'] != 0):
+                        lap_counter = event['attributes']['Lap']
+                        lap_time = event['attributes']['LapTime']
+                        name = event['name']
+                        time = event['time']
+                        participant = searchParticipant(participants, event['refid'])
+                        laps_turned = getLaps(stage_events, event['refid'])
+                        vehicle = participant.get('VehicleId')
+                        stage_lap_times.append({'laps_turned':laps_turned, 'name':name, 'lap_counter':lap_counter, 'lap_time':lap_time, 'time':time, 'vehicle':vehicle})
+            history_list.append(sortLapTimes(stage_lap_times))
+    
+    return history_list
+
 def getAllHistoryLaps(history_list):
     laps = []
     for h in history_list:
@@ -107,7 +135,7 @@ def getVehicle(vehicles_json, vehicleId):
         if vehicle['id'] == vehicleId:
             return vehicle
 
-def exportToXLSX(laps):
+def exportToXLSX(laps, output_filename):
     current_dir = os.path.dirname(os.path.realpath('__file__'))
     vehicles_file = os.path.join(current_dir, 'resources/vehicle_list.json')
 
@@ -116,7 +144,7 @@ def exportToXLSX(laps):
     
     vehicles_json_obj = json.loads(json_data)
 
-    workbook = xlsxwriter.Workbook('output.xlsx')
+    workbook = xlsxwriter.Workbook(output_filename)
     worksheet = workbook.add_worksheet()
     worksheet.write_row(0, 0, ['Position', 'Driver', 'Vehicle', 'Laps', 'Best Lap'])
 
@@ -144,7 +172,6 @@ def main():
         return -1
 
     current_dir = os.path.dirname(os.path.realpath('__file__'))
-    #test_data_file = os.path.join(current_dir, 'src/tests/test-data.json')
     data_file = os.path.join(current_dir, sys.argv[1])
 
     with open(data_file, encoding='utf-8') as json_file:
@@ -152,12 +179,23 @@ def main():
 
     json_obj = json.loads(json_data)
 
-    history = getHistoryList(json_obj)
+    practice1_history = getHistoryListForStage(json_obj, 'practice1', 1)
+    qualifying1_history = getHistoryListForStage(json_obj, 'qualifying1', 1)
+    race1_history = getHistoryListForStage(json_obj, 'race1', 1)
 
-    fastest_laps = getFastestLaps(getAllHistoryLaps(history))
-    for fl in fastest_laps:
+    history = practice1_history + qualifying1_history + race1_history
+
+    all_fastest_laps = getFastestLaps(getAllHistoryLaps(history))
+    practice1_fastest_laps = getFastestLaps(getAllHistoryLaps(practice1_history))
+    qualifying1_fastest_laps = getFastestLaps(getAllHistoryLaps(qualifying1_history))
+    race1_fastest_laps = getFastestLaps(getAllHistoryLaps(race1_history))
+
+    for fl in all_fastest_laps:
         print(msToLapTime(fl['lap_time'])+" "+fl['name'])
 
-    exportToXLSX(fastest_laps)
+    exportToXLSX(all_fastest_laps, 'all.xlsx')
+    exportToXLSX(practice1_fastest_laps, 'practice.xlsx')
+    exportToXLSX(qualifying1_fastest_laps, 'qualifying.xlsx')
+    exportToXLSX(race1_fastest_laps, 'race.xlsx')
     
 main()
