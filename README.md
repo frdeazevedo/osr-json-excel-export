@@ -9,4 +9,4 @@ You can run the code as usual. It requires one argument, which should be the rel
 
 Example: python src/main.py path/to/file.json
 
-The application should create (or override) a file named **output.xlsx** in the current directory.
+The application should create (or override) Excel files for each type of session (practice, qualifying and race) in the current directory.
