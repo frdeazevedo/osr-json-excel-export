@@ -53,35 +53,6 @@ def searchParticipant(participants, refid):
             if p.get('RefId') == refid:
                 return p
 
-# stats > history > stages > practice1
-# orders from fastest to slowest lap for each history
-def getHistoryList(json_obj):
-    history_list = []
-    history = json_obj['stats']['history']
-
-    for h in history:
-        if 'practice1' in h['stages']:
-            practice1_lap_times = []
-            practice1_events = h['stages']['practice1']['events']
-            participants = h['participants']
-            for event in practice1_events:
-                if 'CountThisLapTimes' in event['attributes']:
-                    if (event['attributes']['CountThisLapTimes'] == 1
-                        and event['attributes']['Sector1Time'] != 0
-                        and event['attributes']['Sector2Time'] != 0
-                        and event['attributes']['Sector3Time'] != 0):
-                        lap_counter = event['attributes']['Lap']
-                        lap_time = event['attributes']['LapTime']
-                        name = event['name']
-                        time = event['time']
-                        participant = searchParticipant(participants, event['refid'])
-                        laps_turned = getLaps(practice1_events, event['refid'])
-                        vehicle = participant.get('VehicleId')
-                        practice1_lap_times.append({'laps_turned':laps_turned, 'name':name, 'lap_counter':lap_counter, 'lap_time':lap_time, 'time':time, 'vehicle':vehicle})
-            history_list.append(sortLapTimes(practice1_lap_times))
-    
-    return history_list
-
 # returns a list of lap times
 def getHistoryListForStage(json_obj, stage, countThisLapTimes=1):
     history_list = []
